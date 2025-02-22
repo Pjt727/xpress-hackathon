@@ -16,7 +16,7 @@
           to="/invoice"
           class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
-          +
+          Add
         </router-link>
       </div>
 
@@ -36,6 +36,10 @@
               <th class="px-6 py-3 text-gray-600 font-semibold">
                 Total Amount
               </th>
+              <th class="px-6 py-3 text-gray-600 font-semibold">
+                External/Internal
+              </th>
+              <th class="px-6 py-3 text-gray-600 font-semibold">Paid</th>
               <th class="px-6 py-3 text-gray-600 font-semibold text-center">
                 Actions
               </th>
@@ -53,8 +57,20 @@
               <td class="px-6 py-4 text-gray-900 font-medium">
                 ${{ invoice.amount }}
               </td>
+              <td class="px-6 py-4 text-gray-900 font-medium">
+                {{ invoice.is_outgoing ? "External" : "Internal" }}
+              </td>
+              <td class="px-6 py-4 text-gray-900 font-medium">
+                {{ invoice.is_settled ? "✔️" : "❌" }}
+              </td>
               <td class="px-6 py-4">
                 <div class="flex justify-center gap-4">
+                  <button
+                    class="text-green-600 hover:text-green-800 font-medium"
+                    @click="viewInvoice(invoice)"
+                  >
+                    Edit
+                  </button>
                   <button
                     class="text-blue-600 hover:text-blue-800 font-medium"
                     @click="viewInvoice(invoice)"
@@ -118,6 +134,8 @@ const invoices = ref([
     date: "Jan 15, 2024",
     client: "Tech Solutions Inc.",
     amount: "2500.00",
+    is_settled: true,
+    is_outgoing: true,
   },
   {
     id: 2,
@@ -125,6 +143,8 @@ const invoices = ref([
     date: "Jan 18, 2024",
     client: "Global Systems Ltd.",
     amount: "1800.00",
+    is_settled: false,
+    is_outgoing: false,
   },
 ]);
 
