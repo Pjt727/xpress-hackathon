@@ -125,12 +125,7 @@
           </p>
         </div>
 
-<<<<<<< HEAD
         <div class="mt-8 flex justify-end space-x-4 print-hidden print:hidden">
-=======
-        <!-- Action Buttons (Print and Download PDF) -->
-        <div class="mt-8 flex justify-end space-x-4 print:hidden">
->>>>>>> 428433f (merge)
           <button
             @click="printInvoice"
             class="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
