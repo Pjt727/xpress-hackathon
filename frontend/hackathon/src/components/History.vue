@@ -52,12 +52,6 @@
               <td class="px-6 py-4">
                 <div class="flex justify-center gap-4">
                   <button
-                    class="text-gray-600 hover:text-gray-800 font-medium"
-                    @click="editInvoice(invoice)"
-                  >
-                    Edit
-                  </button>
-                  <button
                     class="text-blue-600 hover:text-blue-800 font-medium"
                     @click="viewInvoice(invoice)"
                   >
@@ -139,11 +133,6 @@ const filteredInvoices = computed(() => {
       invoice.client.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
-
-// Edit Invoice (Placeholder function)
-const editInvoice = (invoice) => {
-  console.log("Editing invoice:", invoice);
-};
 
 // View Invoice
 const viewInvoice = (invoice) => {
