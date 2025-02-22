@@ -4,8 +4,19 @@ from sqlalchemy import select
 from pydantic import BaseModel
 import hashlib
 import secrets
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Allow the front-end URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 TOKEN_NAME = "user_token"
 
