@@ -49,7 +49,7 @@ class NewGroupsInfo(BaseModel):
     name: str
 
 
-@app.post("/make-groups")
+@app.post("/groups")
 async def make_group(group_info: NewGroupsInfo, request: Request):
     token = request.cookies.get(TOKEN_NAME)
     if token is None:
@@ -72,7 +72,24 @@ class GetGroupsInfo(BaseModel):
     id: str
 
 
-@app.delete("/delete-groups")
+@app.get("/groups")
+async def get_groups(group_info: GetGroupsInfo, request: Request):
+    token = request.cookies.get(TOKEN_NAME)
+    if token is None:
+        return {"success": False, "message": "you need to be logged in"}
+    user_email = token_to_user_id.get(token)
+    if user_email is None:
+        return {"success": False, "message": "your login token is expired log in again"}
+
+    select_get_groups = (
+        select(BillingGroup)
+        .join(UserGroupRelationships)
+        .filter(UserGroupRelationships.user_email == user_email)
+    )
+    return session.scalars(select_get_groups)
+
+
+@app.delete("/groups")
 async def delete_group(request: Request, group_info: GetGroupsInfo):
     token = request.cookies.get(TOKEN_NAME)
     if token is None:
