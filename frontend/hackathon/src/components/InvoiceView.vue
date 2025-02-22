@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen p-6 bg-gray-50 flex items-center justify-center">
-    <div class="container max-w-4xl mx-auto bg-white rounded-lg shadow-xl">
-      <div class="p-8">
+    <div class="container max-w-4xl mx-auto bg-white rounded-lg">
+      <div class="p-8" ref="pdfContent">
         <div class="flex justify-between items-start">
           <div>
             <img
@@ -88,16 +88,12 @@
           </p>
         </div>
 
-        <div class="mt-8 flex justify-end space-x-4 print:hidden">
+        <div class="mt-8 flex justify-end space-x-4 print-hidden print:hidden">
           <button
-            class="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 transition-colors duration-200"
+            @click="printInvoice"
+            class="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
-            Print
-          </button>
-          <button
-            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors duration-200"
-          >
-            Download PDF
+            Print/Download PDF
           </button>
         </div>
       </div>
@@ -106,9 +102,16 @@
 </template>
 
 <script setup>
-defineProps({
+import { ref, defineProps } from "vue";
+import { jsPDF } from "jspdf";
+
+const props = defineProps({
   invoiceData: Object,
 });
+
+const printInvoice = () => {
+  window.print();
+};
 </script>
 
 <style>
@@ -117,5 +120,11 @@ body {
   background-color: #f8f9fa;
   color: #333;
   margin: 0;
+}
+
+@media print {
+  .print-hidden {
+    display: none !important;
+  }
 }
 </style>
