@@ -1,5 +1,5 @@
-from fastapi import FastAPI, File, HTTPException, Response, Request, UploadFile, Form
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, File, HTTPException, Response, Request, UploadFile
+from fastapi.responses import JSONResponse, FileResponse
 from starlette.types import ExceptionHandler
 import os
 from backend.db.models import *
@@ -30,6 +30,7 @@ def hash_password(password):
 token_to_user_id = {}
 file_path_count = 0
 email_to_filepaths: dict[str, tuple[int, list[str]]] = {}
+file_path_num_to_email: dict[int, str] = {}
 
 
 class UploadInfo(BaseModel):
@@ -37,20 +38,20 @@ class UploadInfo(BaseModel):
     is_outgoing: bool
 
 
-@app.post("/invoice-upload/")
+@app.post("/invoice-upload")
 async def upload_file(request: Request, file: UploadFile = File(...)):
     global file_path_count
-    # token = request.cookies.get(TOKEN_NAME)
-    # if token is None:
-    #     return {"success": False, "message": "you need to be logged in"}
-    # user_email = token_to_user_id.get(token)
-    # if user_email is None:
-    # return {"success": False, "message": "your login token is expired log in again"}
-    user_email = "foo"
+    token = request.cookies.get(TOKEN_NAME)
+    if token is None:
+        return {"success": False, "message": "you need to be logged in"}
+    user_email = token_to_user_id.get(token)
+    if user_email is None:
+        return {"success": False, "message": "your login token is expired log in again"}
     assert file.filename is not None
     print(file.content_type)
     if user_email not in email_to_filepaths:
         email_to_filepaths[user_email] = (file_path_count, [])
+        file_path_num_to_email[file_path_count] = user_email
         file_path_count += 1
     dir_path = os.path.join(
         "invoice-pdfs",
@@ -92,6 +93,42 @@ async def login(login_info: LoginInfo, response: Response):
 
 class NewGroupsInfo(BaseModel):
     name: str
+
+
+@app.get("/invoice-uploads/{user_num}/{invoice_num}")
+async def get_invoice_pdf(user_num: int, invoice_num: int):
+    user_dir = os.path.join("invoice-pdfs", str(user_num))
+    if not os.path.exists(user_dir):
+        raise HTTPException(status_code=404, detail="pdf for that user not found")
+    pdf_file_path = os.path.join(user_dir, str(invoice_num) + ".pdf")
+    if not os.path.exists(pdf_file_path):
+        raise HTTPException(
+            status_code=404, detail="pdf for that user and number not found"
+        )
+
+    return FileResponse(
+        pdf_file_path,
+        media_type="application/pdf",
+        filename=f"invoice{user_num}{invoice_num}.pdf",
+    )
+
+
+@app.get("/invoice-uploads")
+async def get_invoices_pdf(request: Request):
+    """returns the invoices without the domain name"""
+    token = request.cookies.get(TOKEN_NAME)
+    if token is None:
+        return {"success": False, "message": "you need to be logged in"}
+    user_email = token_to_user_id.get(token)
+    if user_email is None:
+        return {"success": False, "message": "your login token is expired log in again"}
+    if user_email not in email_to_filepaths:
+        return []
+    user_num, file_paths = email_to_filepaths[user_email]
+    invoice_links: list[str] = []
+    for invoice_num in range(len(file_paths)):
+        invoice_links.append(f"invoice-uploads/{user_num}/{invoice_num}")
+    return invoice_links
 
 
 @app.post("/groups")
