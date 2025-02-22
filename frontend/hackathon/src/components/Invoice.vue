@@ -129,7 +129,8 @@
     </div>
   </div>
 
-  <InvoiceView v-if="invoiceView" />
+  <!-- Pass the edited invoice data to InvoiceView -->
+  <InvoiceView v-if="invoiceView" :invoiceData="invoice" />
 </template>
 
 <script setup>

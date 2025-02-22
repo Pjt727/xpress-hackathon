@@ -10,17 +10,18 @@
               class="h-16 w-auto mb-4"
             />
             <h2 class="text-2xl font-bold text-gray-800">
-              Tech Solutions Inc.
+              {{ invoiceData.from.name }}
             </h2>
-            <p class="text-sm text-gray-600">123 Business Ave, Suite 100</p>
-            <p class="text-sm text-gray-600">contact@techsolutions.com</p>
+            <p class="text-sm text-gray-600">{{ invoiceData.from.address }}</p>
+            <p class="text-sm text-gray-600">{{ invoiceData.from.email }}</p>
           </div>
           <div class="text-right">
             <h1 class="text-4xl font-bold text-gray-800">INVOICE</h1>
             <div class="mt-4">
-              <p class="text-sm text-gray-600">Invoice #: INV-2024-001</p>
-              <p class="text-sm text-gray-600">Date: Jan 15, 2024</p>
-              <p class="text-sm text-gray-600">Due Date: Jan 30, 2024</p>
+              <p class="text-sm text-gray-600">
+                Invoice #: {{ invoiceData.number }}
+              </p>
+              <p class="text-sm text-gray-600">Date: {{ invoiceData.date }}</p>
             </div>
           </div>
         </div>
@@ -28,12 +29,11 @@
         <div class="mt-8">
           <h3 class="text-lg font-bold text-gray-700">Bill To:</h3>
           <div class="mt-2">
-            <p class="text-gray-700">Client Company Name</p>
-            <p class="text-gray-600">456 Client Street</p>
-            <p class="text-gray-600">client@email.com</p>
+            <p class="text-gray-700">{{ invoiceData.to.name }}</p>
+            <p class="text-gray-600">{{ invoiceData.to.address }}</p>
+            <p class="text-gray-600">{{ invoiceData.to.email }}</p>
           </div>
         </div>
-
         <div class="mt-8">
           <table class="w-full">
             <thead>
@@ -104,6 +104,13 @@
     </div>
   </div>
 </template>
+
+<script setup>
+defineProps({
+  invoiceData: Object,
+});
+</script>
+
 <style>
 body {
   font-family: "Inter", sans-serif;
