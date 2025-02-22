@@ -27,8 +27,8 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
-    email = mapped_column(String(), primary_key=True)
-    password_hash = mapped_column(String(), nullable=False)
+    email: Mapped[String] = mapped_column(String(), primary_key=True)
+    password_hash: Mapped[String] = mapped_column(String(), nullable=False)
 
 
 class BillingGroup(Base):
