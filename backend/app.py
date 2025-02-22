@@ -135,17 +135,59 @@ async def register(registration_info: RegistrationInfo, response: Response):
 
 
 class InvoiceInfo(BaseModel):
-    id: int
+    group_id : int
     total_invoice_cost: float
     is_settled: bool
     is_outgoing: bool
-    items: dict
-    details: dict
+    item: list[dict]
+    details: list[dict]
+
+class GetInvoiceInfo(BaseModel): 
+    id : int
+
+@app.post("/invoice")
+async def invoice(new_invoice: InvoiceInfo, response: Response):
+    
+    invoice = Invoice(
+    total_invoice_cost = new_invoice.total_invoice_cost,
+    group_id = new_invoice.group_id,
+    is_settled = new_invoice.is_settled,
+    is_outgoing = new_invoice.is_outgoing,
+    item = new_invoice.item,
+    details = new_invoice.details  
+    )
+    
+    session.add(invoice)
+    session.commit()
+    return {"success": True}
 
 
 @app.delete("/invoice")
-async def delete_invoice(invoice_info: InvoiceInfo, response: Response):
-    pass
+async def delete_invoice(request: Request, get_invoices : GetInvoiceInfo):
+    token = request.cookies.get(TOKEN_NAME)
+    if token is None:
+        return {"success": False, "message": "you need to be logged in"}
+    user_email = token_to_user_id.get(token)
+    
+    if user_email is None:
+        return {"success": False, "message": "your login token is expired log in again"}
+    
+    get_invoice_info = ( select(Invoice)
+                        .filter(Invoice.id == get_invoices.id)   
+                        .join(BillingGroup)
+                        .join(UserGroupRelationships)
+                        .filter(UserGroupRelationships.user_email == user_email)
+    )
+    
+    invoice_record = session.scalar(get_invoice_info)
+    if invoice_record is None:
+        return {
+            "success": False,
+            "message": "No such record exists",
+        }
+    session.delete(invoice_record)
+    session.commit()
+    return {"success": True, "message": "record deleted successfully"}
 
 
 @app.get("/")
