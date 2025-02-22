@@ -1,6 +1,9 @@
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI, File, HTTPException, Response, Request, UploadFile
+from fastapi.responses import JSONResponse
+from starlette.types import ExceptionHandler
 from backend.db.models import *
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from pydantic import BaseModel
 import hashlib
 import secrets
@@ -23,6 +26,12 @@ def hash_password(password):
 
 
 token_to_user_id = {}
+
+
+@app.post("/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    # Save the uploaded PDF file to a specified location
+    return {"message": "PDF file uploaded and saved successfully"}
 
 
 class LoginInfo(BaseModel):
@@ -135,50 +144,52 @@ async def register(registration_info: RegistrationInfo, response: Response):
 
 
 class InvoiceInfo(BaseModel):
-    group_id : int
+    group_id: int
     total_invoice_cost: float
     is_settled: bool
     is_outgoing: bool
     item: list[dict]
     details: list[dict]
 
-class GetInvoiceInfo(BaseModel): 
-    id : int
+
+class GetInvoiceInfo(BaseModel):
+    id: int
+
 
 @app.post("/invoice")
 async def invoice(new_invoice: InvoiceInfo, response: Response):
-    
     invoice = Invoice(
-    total_invoice_cost = new_invoice.total_invoice_cost,
-    group_id = new_invoice.group_id,
-    is_settled = new_invoice.is_settled,
-    is_outgoing = new_invoice.is_outgoing,
-    item = new_invoice.item,
-    details = new_invoice.details  
+        total_invoice_cost=new_invoice.total_invoice_cost,
+        group_id=new_invoice.group_id,
+        is_settled=new_invoice.is_settled,
+        is_outgoing=new_invoice.is_outgoing,
+        item=new_invoice.item,
+        details=new_invoice.details,
     )
-    
+
     session.add(invoice)
     session.commit()
     return {"success": True}
 
 
 @app.delete("/invoice")
-async def delete_invoice(request: Request, get_invoices : GetInvoiceInfo):
+async def delete_invoice(request: Request, get_invoices: GetInvoiceInfo):
     token = request.cookies.get(TOKEN_NAME)
     if token is None:
         return {"success": False, "message": "you need to be logged in"}
     user_email = token_to_user_id.get(token)
-    
+
     if user_email is None:
         return {"success": False, "message": "your login token is expired log in again"}
-    
-    get_invoice_info = ( select(Invoice)
-                        .filter(Invoice.id == get_invoices.id)   
-                        .join(BillingGroup)
-                        .join(UserGroupRelationships)
-                        .filter(UserGroupRelationships.user_email == user_email)
+
+    get_invoice_info = (
+        select(Invoice)
+        .filter(Invoice.id == get_invoices.id)
+        .join(BillingGroup)
+        .join(UserGroupRelationships)
+        .filter(UserGroupRelationships.user_email == user_email)
     )
-    
+
     invoice_record = session.scalar(get_invoice_info)
     if invoice_record is None:
         return {
@@ -188,6 +199,14 @@ async def delete_invoice(request: Request, get_invoices : GetInvoiceInfo):
     session.delete(invoice_record)
     session.commit()
     return {"success": True, "message": "record deleted successfully"}
+
+
+def rollback(request: Request, exc: HTTPException):
+    session.rollback()
+    return JSONResponse({"success": False, "message": "interal database error"})
+
+
+app.add_exception_handler(SQLAlchemyError, rollback)  # pyright: ignore
 
 
 @app.get("/")
