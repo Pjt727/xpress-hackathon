@@ -45,39 +45,76 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="border-b hover:bg-gray-50">
-                <td class="py-4 px-4">Web Development Services</td>
-                <td class="text-center py-4 px-4">1</td>
-                <td class="text-right py-4 px-4">$2,000.00</td>
-                <td class="text-right py-4 px-4">$2,000.00</td>
-              </tr>
-              <tr class="border-b hover:bg-gray-50">
-                <td class="py-4 px-4">UI/UX Design</td>
-                <td class="text-center py-4 px-4">1</td>
-                <td class="text-right py-4 px-4">$1,500.00</td>
-                <td class="text-right py-4 px-4">$1,500.00</td>
+              <!-- Loop through products -->
+              <tr
+                v-for="(product, index) in invoiceData.products"
+                :key="index"
+                class="border-b hover:bg-gray-50"
+              >
+                <td class="py-4 px-4">{{ product.description }}</td>
+                <td class="text-center py-4 px-4">{{ product.qty }}</td>
+                <td class="text-right py-4 px-4">
+                  ${{ product.rate.toFixed(2) }}
+                </td>
+                <td class="text-right py-4 px-4">
+                  ${{ (product.qty * product.rate).toFixed(2) }}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
+        <!-- Total Calculation Section -->
         <div class="mt-8 flex justify-end">
           <div class="w-1/3">
             <div class="flex justify-between mb-2">
               <span class="text-gray-600">Subtotal:</span>
-              <span class="text-gray-800">$3,500.00</span>
+              <span class="text-gray-800">
+                ${{
+                  invoiceData.products
+                    .reduce(
+                      (acc, product) => acc + product.qty * product.rate,
+                      0
+                    )
+                    .toFixed(2)
+                }}
+              </span>
             </div>
             <div class="flex justify-between mb-2">
               <span class="text-gray-600">Tax (10%):</span>
-              <span class="text-gray-800">$350.00</span>
+              <span class="text-gray-800">
+                ${{
+                  (
+                    invoiceData.products.reduce(
+                      (acc, product) => acc + product.qty * product.rate,
+                      0
+                    ) * 0.1
+                  ).toFixed(2)
+                }}
+              </span>
             </div>
             <div class="flex justify-between mb-2 pt-2 border-t">
               <span class="font-bold text-gray-700">Total:</span>
-              <span class="font-bold text-blue-600">$3,850.00</span>
+              <span class="font-bold text-blue-600">
+                ${{
+                  (
+                    invoiceData.products.reduce(
+                      (acc, product) => acc + product.qty * product.rate,
+                      0
+                    ) +
+                    invoiceData.products.reduce(
+                      (acc, product) => acc + product.qty * product.rate,
+                      0
+                    ) *
+                      0.1
+                  ).toFixed(2)
+                }}
+              </span>
             </div>
           </div>
         </div>
 
+        <!-- Terms and Conditions -->
         <div class="mt-12">
           <h4 class="text-lg font-bold text-gray-700 mb-4">
             Terms & Conditions
@@ -88,7 +125,12 @@
           </p>
         </div>
 
+<<<<<<< HEAD
         <div class="mt-8 flex justify-end space-x-4 print-hidden print:hidden">
+=======
+        <!-- Action Buttons (Print and Download PDF) -->
+        <div class="mt-8 flex justify-end space-x-4 print:hidden">
+>>>>>>> 428433f (merge)
           <button
             @click="printInvoice"
             class="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -114,7 +156,7 @@ const printInvoice = () => {
 };
 </script>
 
-<style>
+<style scoped>
 body {
   font-family: "Inter", sans-serif;
   background-color: #f8f9fa;
