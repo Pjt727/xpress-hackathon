@@ -111,6 +111,8 @@ async def delete_group(request: Request, group_info: GetGroupsInfo):
     session.commit()
     return {"success": True, "message": "record deleted successfully"}
 
+@app.delete("/invoice")
+async def delete_invoice(invoice_info: InvoiceInfo, response: Response):
 
 class RegistrationInfo(BaseModel):
     email: str
@@ -133,6 +135,28 @@ async def register(registration_info: RegistrationInfo, response: Response):
     response.set_cookie(key=TOKEN_NAME, value=new_token)
     return {"success": True}
 
+
+class Invoice(Base):
+    __tablename__ = "invoices"
+    id = mapped_column(Integer(), primary_key=True, autoincrement=True)
+    total_invoice_cost = mapped_column(Float(), nullable=False)
+    is_settled = mapped_column(Boolean(), nullable=False, default=False)
+    is_outgoing = mapped_column(Boolean(), nullable=False)
+    items = mapped_column(JSON())
+    details = mapped_column(JSON())
+
+class InvoiceInfo(BaseModel):
+    id: int
+    total_invoice_cost: float
+    is_settled : bool
+    is_outgoing : bool
+    items  : JSON
+    details : JSON
+    
+    
+@app.delete("/invoice")
+async def delete_invoice(invoice_info: InvoiceInfo, response: Response):
+    
 
 @app.get("/")
 async def root():
