@@ -1,10 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase
-<<<<<<< Updated upstream
-from backend.db.models import *
-=======
-from models import *
->>>>>>> Stashed changes
-
+from db.models import *
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 import os
 

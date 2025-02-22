@@ -73,7 +73,7 @@ class GetGroupsInfo(BaseModel):
 
 
 @app.get("/groups")
-async def get_groups(group_info: GetGroupsInfo, request: Request):
+async def get_groups(request: Request):
     token = request.cookies.get(TOKEN_NAME)
     if token is None:
         return {"success": False, "message": "you need to be logged in"}
@@ -86,7 +86,7 @@ async def get_groups(group_info: GetGroupsInfo, request: Request):
         .join(UserGroupRelationships)
         .filter(UserGroupRelationships.user_email == user_email)
     )
-    return session.scalars(select_get_groups)
+    return session.scalars(select_get_groups).all()
 
 
 @app.delete("/groups")
