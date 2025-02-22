@@ -1,8 +1,10 @@
-from fastapi import FastAPI, File, HTTPException, Response, Request, UploadFile
+from fastapi import FastAPI, File, HTTPException, Response, Request, UploadFile, Form
 from fastapi.responses import JSONResponse
 from starlette.types import ExceptionHandler
+import os
 from backend.db.models import *
 from sqlalchemy import select
+import shutil
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import BaseModel
 import hashlib
@@ -26,11 +28,45 @@ def hash_password(password):
 
 
 token_to_user_id = {}
+file_path_count = 0
+email_to_filepaths: dict[str, tuple[int, list[str]]] = {}
 
 
-@app.post("/upload/")
-async def upload_file(file: UploadFile = File(...)):
-    # Save the uploaded PDF file to a specified location
+class UploadInfo(BaseModel):
+    name: str
+    is_outgoing: bool
+
+
+@app.post("/invoice-upload/")
+async def upload_file(request: Request, file: UploadFile = File(...)):
+    global file_path_count
+    # token = request.cookies.get(TOKEN_NAME)
+    # if token is None:
+    #     return {"success": False, "message": "you need to be logged in"}
+    # user_email = token_to_user_id.get(token)
+    # if user_email is None:
+    # return {"success": False, "message": "your login token is expired log in again"}
+    user_email = "foo"
+    assert file.filename is not None
+    print(file.content_type)
+    if user_email not in email_to_filepaths:
+        email_to_filepaths[user_email] = (file_path_count, [])
+        file_path_count += 1
+    dir_path = os.path.join(
+        "invoice-pdfs",
+        str(email_to_filepaths[user_email][0]),
+    )
+    os.makedirs(dir_path, exist_ok=True)
+
+    file_path = os.path.join(
+        dir_path,
+        f"{len(email_to_filepaths[user_email][1])}.pdf",
+    )
+    email_to_filepaths[user_email][1].append(file_path)
+
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
     return {"message": "PDF file uploaded and saved successfully"}
 
 
