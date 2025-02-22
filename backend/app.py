@@ -30,6 +30,7 @@ class LoginInfo(BaseModel):
     password: str
 
 
+
 @app.post("/login")
 async def login(login_info: LoginInfo, response: Response):
     select_query = select(User).filter(User.email == login_info.email)
@@ -44,7 +45,48 @@ async def login(login_info: LoginInfo, response: Response):
     response.set_cookie(key=TOKEN_NAME, value=new_token)
     return {"success": True}
 
+class Groups(BaseModel):
+    id: int
+    name: str
 
+
+@app.post("/MakeGroups")
+async def makeGroup(group_info: Groups, user_info: User,  response: Response):
+    group = BillingGroup(
+        id = group_info.id,
+        name = group_info.name
+    )
+    user = User(
+        id = user_info.email,
+        email = user_info.email
+    )
+    new_token = secrets.token_urlsafe(32)
+    token_to_user_id[new_token] = user.email
+    response.set_cookie(key=TOKEN_NAME, value=new_token)
+    session.add(group)
+    session.commit()
+    return {"success": True}
+
+
+@app.post("/DeleteGroups")
+async def deleteGroup(group_info: Groups, user_info: User,  response: Response):
+    group = BillingGroup(
+        id = group_info.id,
+        name = group_info.name
+    )
+    user = User(
+        id = user_info.email,
+        email = user_info.email
+    )
+    new_token = secrets.token_urlsafe(32)
+    token_to_user_id[new_token] = user.email
+    response.set_cookie(key=TOKEN_NAME, value=new_token)
+    session.delete(group)
+    session.commit()
+    return {"success": True, "message": "record deleted successfully"}
+
+    
+    
 class RegistrationInfo(BaseModel):
     email: str
     password: str
