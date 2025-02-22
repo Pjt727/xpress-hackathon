@@ -1,5 +1,4 @@
-from backend.models import *
-from sqlalchemy.orm import DeclarativeBase
+from models import *
 
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 import os
@@ -13,7 +12,8 @@ logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 
 def simple_create_database():
-    DeclarativeBase.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
+    print("added all the tables")
 
 
 def main():
@@ -21,4 +21,4 @@ def main():
 
 
 if __name__ == "__main__":
-    simple_create_database()
+    main()
