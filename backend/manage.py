@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase
-from .models import *
+from backend.db.models import *
 
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 import os
