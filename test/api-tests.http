@@ -1,2 +1,17 @@
+@hostname=http://127.0.0.1:8000
+
 ### create a user
-POST  
+# @name LOGIN
+POST {{hostname}}/login
+Content-Type: application/json
+
+{
+  "email": "test",
+  "password": "123"
+}
+### 
+GET {{hostname}}/invoice-uploads
+Content-Type: application/x-www-form-urlencoded
+Content-Type: application/json
+Cookie: user_token={{LOGIN.response.cookies.user_token.value}};
+
