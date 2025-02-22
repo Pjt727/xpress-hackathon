@@ -1,7 +1,6 @@
 import os
 from sqlalchemy.orm import (
     Mapped,
-    validates,
     mapped_column,
     relationship,
     Session,
@@ -9,17 +8,12 @@ from sqlalchemy.orm import (
 )
 from dotenv import load_dotenv
 from sqlalchemy import (
-    ForeignKey,
     create_engine,
     Integer,
     String,
     Boolean,
     Float,
     JSON,
-    Enum,
-    DateTime,
-    UniqueConstraint,
-    ForeignKeyConstraint,
 )
 
 Base = declarative_base()

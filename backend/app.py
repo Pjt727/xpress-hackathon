@@ -30,7 +30,6 @@ class LoginInfo(BaseModel):
     password: str
 
 
-
 @app.post("/login")
 async def login(login_info: LoginInfo, response: Response):
     select_query = select(User).filter(User.email == login_info.email)
@@ -45,48 +44,57 @@ async def login(login_info: LoginInfo, response: Response):
     response.set_cookie(key=TOKEN_NAME, value=new_token)
     return {"success": True}
 
-class Groups(BaseModel):
-    id: int
+
+class NewGroupsInfo(BaseModel):
     name: str
 
 
-@app.post("/MakeGroups")
-async def makeGroup(group_info: Groups, user_info: User,  response: Response):
-    group = BillingGroup(
-        id = group_info.id,
-        name = group_info.name
-    )
-    user = User(
-        id = user_info.email,
-        email = user_info.email
-    )
-    new_token = secrets.token_urlsafe(32)
-    token_to_user_id[new_token] = user.email
-    response.set_cookie(key=TOKEN_NAME, value=new_token)
+@app.post("/make-groups")
+async def make_group(group_info: NewGroupsInfo, request: Request):
+    token = request.cookies.get(TOKEN_NAME)
+    if token is None:
+        return {"success": False, "message": "you need to be logged in"}
+    user_email = token_to_user_id.get(token)
+    if user_email is None:
+        return {"success": False, "message": "your login token is expired log in again"}
+    group = BillingGroup(name=group_info.name)
     session.add(group)
+    session.flush()
+    group_relationship = UserGroupRelationships(
+        user_email=user_email, group_id=group.id
+    )
+    session.add(group_relationship)
     session.commit()
     return {"success": True}
 
 
-@app.post("/DeleteGroups")
-async def deleteGroup(group_info: Groups, user_info: User,  response: Response):
-    group = BillingGroup(
-        id = group_info.id,
-        name = group_info.name
+class GetGroupsInfo(BaseModel):
+    id: str
+
+
+@app.delete("/delete-groups")
+async def delete_group(request: Request, group_info: GetGroupsInfo):
+    token = request.cookies.get(TOKEN_NAME)
+    if token is None:
+        return {"success": False, "message": "you need to be logged in"}
+    user_email = token_to_user_id.get(token)
+    if user_email is None:
+        return {"success": False, "message": "your login token is expired log in again"}
+    get_user_group = select(UserGroupRelationships).filter(
+        UserGroupRelationships.user_email == user_email
     )
-    user = User(
-        id = user_info.email,
-        email = user_info.email
-    )
-    new_token = secrets.token_urlsafe(32)
-    token_to_user_id[new_token] = user.email
-    response.set_cookie(key=TOKEN_NAME, value=new_token)
+    relationship_to_group = session.scalar(get_user_group)
+    if relationship_to_group is None:
+        return {
+            "success": False,
+            "message": "you do not own that group so you cannot delete it",
+        }
+    group = BillingGroup(id=group_info.id)
     session.delete(group)
     session.commit()
     return {"success": True, "message": "record deleted successfully"}
 
-    
-    
+
 class RegistrationInfo(BaseModel):
     email: str
     password: str
