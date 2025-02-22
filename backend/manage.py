@@ -14,12 +14,12 @@ logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 def simple_drop_database():
     Base.metadata.drop_all(engine)
-    print("added all the tables")
+    print("dropped all the tables")
 
 
 def simple_create_database():
     Base.metadata.create_all(engine)
-    print("added all the tables")
+    print("created all the tables")
 
 
 def main():

@@ -1,5 +1,6 @@
 import os
 from sqlalchemy.orm import (
+    CascadeOptions,
     Mapped,
     mapped_column,
     relationship,
@@ -9,6 +10,7 @@ from sqlalchemy.orm import (
 from dotenv import load_dotenv
 from sqlalchemy import (
     create_engine,
+    ForeignKey,
     Integer,
     String,
     Boolean,
@@ -24,27 +26,45 @@ class User(Base):
     email: Mapped[String] = mapped_column(String(), primary_key=True)
     password_hash: Mapped[String] = mapped_column(String(), nullable=False)
 
+    # may later add these
+    # user_group_relationships: Mapped[list["UserGroupRelationships"]] = relationship(
+    #     back_populates="user"
+    # )
+
 
 class BillingGroup(Base):
     __tablename__ = "billing_groups"
-    id = mapped_column(Integer(), primary_key=True, autoincrement=True)
-    name = mapped_column(String(), nullable=False)
+    id: Mapped[Integer] = mapped_column(Integer(), primary_key=True, autoincrement=True)
+    name: Mapped[String] = mapped_column(String(), nullable=False)
+
+    # user_group_relationships: Mapped[list["BillingGroup"]] = relationship(
+    #     back_populates="user"
+    # )
 
 
 class UserGroupRelationships(Base):
     __tablename__ = "user_group_relationships"
-    user_email = mapped_column(String(), primary_key=True)
-    group_id = mapped_column(Integer(), primary_key=True)
+    user_email: Mapped[String] = mapped_column(
+        String(), ForeignKey("users.email"), primary_key=True
+    )
+    group_id: Mapped[Integer] = mapped_column(
+        Integer(), ForeignKey("billing_groups.id"), primary_key=True
+    )
 
 
 class Invoice(Base):
     __tablename__ = "invoices"
-    id = mapped_column(Integer(), primary_key=True, autoincrement=True)
-    total_invoice_cost = mapped_column(Float(), nullable=False)
-    is_settled = mapped_column(Boolean(), nullable=False, default=False)
-    is_outgoing = mapped_column(Boolean(), nullable=False)
-    items = mapped_column(JSON())
-    details = mapped_column(JSON())
+    id: Mapped[Integer] = mapped_column(Integer(), primary_key=True, autoincrement=True)
+    group_id: Mapped[Integer] = mapped_column(
+        Integer(), ForeignKey("billing_groups.id", ondelete="cascade")
+    )
+    total_invoice_cost: Mapped[Float] = mapped_column(Float(), nullable=False)
+    is_settled: Mapped[Boolean] = mapped_column(
+        Boolean(), nullable=False, default=False
+    )
+    is_outgoing: Mapped[Boolean] = mapped_column(Boolean(), nullable=False)
+    item: Mapped[JSON] = mapped_column(JSON())
+    details: Mapped[JSON] = mapped_column(JSON())
 
 
 ### Database connecction
