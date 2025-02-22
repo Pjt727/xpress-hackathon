@@ -5,15 +5,19 @@
     </div>
 
     <div class="bg-white rounded-lg shadow-lg p-6">
-      <div class="flex flex-col md:flex-row justify-between gap-4 mb-6">
-        <div class="flex-1">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search invoices..."
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
+      <div class="flex items-center gap-4 mb-6">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search invoices..."
+          class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <router-link
+          to="/invoice"
+          class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          +
+        </router-link>
       </div>
 
       <!-- Invoice Table -->
