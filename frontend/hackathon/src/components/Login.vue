@@ -61,7 +61,7 @@ export default {
       });
 
       try {
-        const response = await axios.post("http://127.0.0.1:8000/login", {
+          const response = await axios.post(`${domainName}/login`, {
           email: email.value,
           password: password.value,
         });
