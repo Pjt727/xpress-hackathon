@@ -310,6 +310,12 @@ async def invoice(new_invoice: InvoiceInfo, response: Response):
     return {"success": True}
 
 
+@app.get("/invoice")
+async def get_invoice(request: Request):
+    get_invoice_info = select(Invoice)
+    return session.scalars(get_invoice_info).all()
+
+
 @app.delete("/invoice")
 async def delete_invoice(request: Request, get_invoices: GetInvoiceInfo):
     # token = request.cookies.get(TOKEN_NAME)
