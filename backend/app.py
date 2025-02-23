@@ -11,6 +11,7 @@ from pydantic import BaseModel
 import hashlib
 import secrets
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
@@ -22,6 +23,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
+)
+
+app.mount(
+    "/invoice-uploads", StaticFiles(directory="invoice-pdfs"), name="invoice-pdfs"
 )
 
 TOKEN_NAME = "user_token"
@@ -92,7 +97,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         messages=[
             {
                 "role": "user",
-                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com/invoice-uploads/{user_num}/{invoice_num}. Please parse the pdf and return the json of it's information formatted.",
+                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com/invoice-uploads/{user_num}/{invoice_num}.pdf Please parse the pdf and return the json of it's information formatted.",
             }
         ],
     )
@@ -132,24 +137,6 @@ class NewGroupsInfo(BaseModel):
     name: str
 
 
-@app.get("/invoice-uploads/{user_num}/{invoice_num}")
-async def get_invoice_pdf(user_num: int, invoice_num: int):
-    user_dir = os.path.join("invoice-pdfs", str(user_num))
-    if not os.path.exists(user_dir):
-        raise HTTPException(status_code=404, detail="pdf for that user not found")
-    pdf_file_path = os.path.join(user_dir, str(invoice_num) + ".pdf")
-    if not os.path.exists(pdf_file_path):
-        raise HTTPException(
-            status_code=404, detail="pdf for that user and number not found"
-        )
-
-    return FileResponse(
-        pdf_file_path,
-        media_type="application/pdf",
-        filename=f"invoice{user_num}{invoice_num}.pdf",
-    )
-
-
 @app.get("/invoice-uploads")
 async def get_invoices_pdf(request: Request):
     """returns the invoices without the domain name"""
@@ -164,7 +151,7 @@ async def get_invoices_pdf(request: Request):
     user_num, file_paths = email_to_filepaths[user_email]
     invoice_links: list[str] = []
     for invoice_num in range(len(file_paths)):
-        invoice_links.append(f"invoice-uploads/{user_num}/{invoice_num}")
+        invoice_links.append(f"invoice-uploads/{user_num}/{invoice_num}.pdf")
     return invoice_links
 
 
