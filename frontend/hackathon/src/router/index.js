@@ -4,6 +4,7 @@ import Register from "@/components/Register.vue";
 import Invoice from "@/components/Invoice.vue";
 import History from "@/components/History.vue";
 import Group from "@/components/Group.vue";
+import Download from "@/components/Download.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },
@@ -12,6 +13,7 @@ const routes = [
   { path: "/invoice", component: Invoice },
   { path: "/history", component: History },
   { path: "/group", component: Group },
+  { path: "/download", component: Download },
 ];
 
 const router = createRouter({
