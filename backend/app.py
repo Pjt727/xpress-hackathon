@@ -39,54 +39,9 @@ class UploadInfo(BaseModel):
     is_outgoing: bool
 
 
-@app.post("/invoice-upload")
-async def upload_file(request: Request, file: UploadFile = File(...)):
-    global file_path_count
-    token = request.cookies.get(TOKEN_NAME)
-    if token is None:
-        return {"success": False, "message": "you need to be logged in"}
-    user_email = token_to_user_id.get(token)
-    if user_email is None:
-        return {"success": False, "message": "your login token is expired log in again"}
-    assert file.filename is not None
-    print(file.content_type)
-    if user_email not in email_to_filepaths:
-        email_to_filepaths[user_email] = (file_path_count, [])
-        file_path_num_to_email[file_path_count] = user_email
-        file_path_count += 1
-    user_num = email_to_filepaths[user_email][0]
-    dir_path = os.path.join(
-        "invoice-pdfs",
-        str(user_num),
-    )
-    os.makedirs(dir_path, exist_ok=True)
-
-    invoice_num = email_to_filepaths[user_email][1]
-    file_path = os.path.join(
-        dir_path,
-        f"{len(invoice_num)}.pdf",
-    )
-    email_to_filepaths[user_email][1].append(file_path)
-
-    with open(file_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    client = OpenAI(
-        base_url="https://kevinbeutler2003.ap.xpressai.cloud/api/lexi/",
-        api_key=os.getenv("XPRESS_API_KEY"),
-    )
-
-    response = client.chat.completions.create(
-        model="Lexi",  # Available models: Lexi, LexiOnboarding
-        messages=[
-            {
-                "role": "user",
-                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com//invoice-uploads/{user_num}/{invoice_num}. Please parse the pdf and return the json of it's information formatted.",
-            }
-        ],
-    )
-    print(response.model_dump_json())
-
+@app.post("/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    # Save the uploaded PDF file to a specified location
     return {"message": "PDF file uploaded and saved successfully"}
 
 
@@ -262,6 +217,60 @@ async def invoice(new_invoice: InvoiceInfo, response: Response):
     session.add(invoice)
     session.commit()
     return {"success": True}
+
+
+
+@app.get("/invoice")
+async def get_invoice(request: Request):
+    token = request.cookies.get(TOKEN_NAME)
+    if token is None:
+        return {"success": False, "message": "you need to be logged in"}
+    user_email = token_to_user_id.get(token)
+    if user_email is None:
+        return {"success": False, "message": "your login token is expired log in again"}
+    get_invoice_info = (
+        select(Invoice)
+        .join(BillingGroup)
+        .join(UserGroupRelationships)
+        .filter(UserGroupRelationships.user_email == user_email)
+    )
+    return session.scalars(get_invoice_info).all()
+    
+
+@app.put("/invoice")
+async def edit_invoice(request: Request, invoices : InvoiceInfo, get_invoices: GetInvoiceInfo):
+    token = request.cookies.get(TOKEN_NAME)
+    if token is None:
+        return {"success": False, "message": "you need to be logged in"}
+    user_email = token_to_user_id.get(token)
+
+    if user_email is None:
+        return {"success": False, "message": "your login token is expired log in again"}
+
+    get_invoice_info = (
+        select(Invoice)
+        .join(BillingGroup)
+        .join(UserGroupRelationships)
+        .filter(UserGroupRelationships.user_email == user_email)
+    )
+    
+    invoice_record = session.scalar(get_invoice_info)
+    if invoice_record is None:
+        return {
+            "success": False,
+            "message": "No such record exists",
+        }
+    
+    invoice_record.total_invoice_cost = invoices.total_invoice_cost
+    invoice_record.group_id = invoices.group_id
+    invoice_record.is_settled = invoices.is_settled
+    invoice_record.is_outgoing = invoices.is_outgoing
+    invoice_record.item = invoices.item
+    invoice_record.details = invoices.details
+    
+    session.commit()
+    return {"success": True, "message": "record edited successfully"}
+
 
 
 @app.delete("/invoice")
