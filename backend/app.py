@@ -92,7 +92,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         messages=[
             {
                 "role": "user",
-                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com//invoice-uploads/{user_num}/{invoice_num}. Please parse the pdf and return the json of it's information formatted.",
+                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com/invoice-uploads/{user_num}/{invoice_num}. Please parse the pdf and return the json of it's information formatted.",
             }
         ],
     )
@@ -119,9 +119,13 @@ async def login(login_info: LoginInfo, response: Response):
     new_token = secrets.token_urlsafe(32)
     token_to_user_id[new_token] = user.email
     response.set_cookie(
-        key=TOKEN_NAME, value=new_token, httponly=False, samesite=None, secure=True
+        key=TOKEN_NAME,
+        value=new_token,
+        httponly=False,
+        samesite=None,
+        secure=True,
     )
-    return {"success": True}
+    return {"success": True, "login_token": new_token}
 
 
 class NewGroupsInfo(BaseModel):
