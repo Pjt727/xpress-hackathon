@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, HTTPException, Response, Request, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
+from openai import OpenAI
 from starlette.types import ExceptionHandler
 import os
 from backend.db.models import *
@@ -10,6 +11,7 @@ from pydantic import BaseModel
 import hashlib
 import secrets
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
@@ -21,6 +23,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
+)
+
+app.mount(
+    "/invoice-uploads", StaticFiles(directory="invoice-pdfs"), name="invoice-pdfs"
 )
 
 TOKEN_NAME = "user_token"
@@ -64,20 +70,39 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         email_to_filepaths[user_email] = (file_path_count, [])
         file_path_num_to_email[file_path_count] = user_email
         file_path_count += 1
+    user_num = email_to_filepaths[user_email][0]
     dir_path = os.path.join(
         "invoice-pdfs",
-        str(email_to_filepaths[user_email][0]),
+        str(user_num),
     )
     os.makedirs(dir_path, exist_ok=True)
 
+    invoice_num = email_to_filepaths[user_email][1]
     file_path = os.path.join(
         dir_path,
-        f"{len(email_to_filepaths[user_email][1])}.pdf",
+        f"{len(invoice_num)}.pdf",
     )
     email_to_filepaths[user_email][1].append(file_path)
 
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
+
+    client = OpenAI(
+        base_url="https://kevinbeutler2003.ap.xpressai.cloud/api/lexi/",
+        api_key=os.getenv("XPRESS_API_KEY"),
+    )
+
+    chat = client.chat.completions.create(
+        model="Lexi",  # Available models: Lexi, LexiOnboarding
+        messages=[
+            {
+                "role": "user",
+                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com/invoice-uploads/{user_num}/{invoice_num}.pdf Please parse the pdf and return the json of it's information formatted.",
+            }
+        ],
+    )
+    for choice in chat.choices:
+        print(choice.message.content)
 
     return {"message": "PDF file uploaded and saved successfully"}
 
@@ -100,34 +125,16 @@ async def login(login_info: LoginInfo, response: Response):
     token_to_user_id[new_token] = user.email
     response.set_cookie(
         key=TOKEN_NAME,
-        value=new_token, 
-        httponly=True, 
-        samesite="None",
-        secure=True
+        value=new_token,
+        httponly=False,
+        samesite=None,
+        secure=True,
     )
-    return {"success": True}
+    return {"success": True, "login_token": new_token}
 
 
 class NewGroupsInfo(BaseModel):
     name: str
-
-
-@app.get("/invoice-uploads/{user_num}/{invoice_num}")
-async def get_invoice_pdf(user_num: int, invoice_num: int):
-    user_dir = os.path.join("invoice-pdfs", str(user_num))
-    if not os.path.exists(user_dir):
-        raise HTTPException(status_code=404, detail="pdf for that user not found")
-    pdf_file_path = os.path.join(user_dir, str(invoice_num) + ".pdf")
-    if not os.path.exists(pdf_file_path):
-        raise HTTPException(
-            status_code=404, detail="pdf for that user and number not found"
-        )
-
-    return FileResponse(
-        pdf_file_path,
-        media_type="application/pdf",
-        filename=f"invoice{user_num}{invoice_num}.pdf",
-    )
 
 
 @app.get("/invoice-uploads")
@@ -144,7 +151,7 @@ async def get_invoices_pdf(request: Request):
     user_num, file_paths = email_to_filepaths[user_email]
     invoice_links: list[str] = []
     for invoice_num in range(len(file_paths)):
-        invoice_links.append(f"invoice-uploads/{user_num}/{invoice_num}")
+        invoice_links.append(f"invoice-uploads/{user_num}/{invoice_num}.pdf")
     return invoice_links
 
 

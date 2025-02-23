@@ -66,8 +66,8 @@ export default {
         const response = await axios.post(
           `${domainName}/login`,
           {
-            email: email.value,
-            password: password.value,
+          email: email.value,
+          password: password.value,
           },
           {
             withCredentials: true,
