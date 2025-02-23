@@ -59,13 +59,14 @@ class UploadInfo(BaseModel):
 @app.post("/invoice-upload")
 async def upload_file(request: Request, file: UploadFile = File(...)):
     global file_path_count
-    token = request.cookies.get(TOKEN_NAME)
-    if token is None:
-        return {"success": False, "message": "you need to be logged in"}
-    user_email = token_to_user_id.get(token)
-    if user_email is None:
-        return {"success": False, "message": "your login token is expired log in again"}
-    assert file.filename is not None
+    # token = request.cookies.get(TOKEN_NAME)
+    # if token is None:
+    #     return {"success": False, "message": "you need to be logged in"}
+    # user_email = token_to_user_id.get(token)
+    # if user_email is None:
+    #     return {"success": False, "message": "your login token is expired log in again"}
+    # assert file.filename is not None
+    user_email = "test"
     print(file.content_type)
     if user_email not in email_to_filepaths:
         email_to_filepaths[user_email] = (file_path_count, [])
@@ -177,14 +178,15 @@ class NewGroupsInfo(BaseModel):
 @app.get("/invoice-uploads")
 async def get_invoices_pdf(request: Request):
     """returns the invoices without the domain name"""
-    token = request.cookies.get(TOKEN_NAME)
-    if token is None:
-        return {"success": False, "message": "you need to be logged in"}
-    user_email = token_to_user_id.get(token)
-    if user_email is None:
-        return {"success": False, "message": "your login token is expired log in again"}
-    if user_email not in email_to_filepaths:
-        return []
+    # token = request.cookies.get(TOKEN_NAME)
+    # if token is None:
+    #     return {"success": False, "message": "you need to be logged in"}
+    # user_email = token_to_user_id.get(token)
+    # if user_email is None:
+    #     return {"success": False, "message": "your login token is expired log in again"}
+    # if user_email not in email_to_filepaths:
+    #     return []
+    user_email = "test"
     user_num, file_paths = email_to_filepaths[user_email]
     invoice_links: list[str] = []
     for invoice_num in range(len(file_paths)):
@@ -194,12 +196,13 @@ async def get_invoices_pdf(request: Request):
 
 @app.post("/groups")
 async def make_group(group_info: NewGroupsInfo, request: Request):
-    token = request.cookies.get(TOKEN_NAME)
-    if token is None:
-        return {"success": False, "message": "you need to be logged in"}
-    user_email = token_to_user_id.get(token)
-    if user_email is None:
-        return {"success": False, "message": "your login token is expired log in again"}
+    # token = request.cookies.get(TOKEN_NAME)
+    # if token is None:
+    #     return {"success": False, "message": "you need to be logged in"}
+    # user_email = token_to_user_id.get(token)
+    # if user_email is None:
+    #     return {"success": False, "message": "your login token is expired log in again"}
+    user_email = "test"
     group = BillingGroup(name=group_info.name)
     session.add(group)
     session.flush()
@@ -217,12 +220,13 @@ class GetGroupsInfo(BaseModel):
 
 @app.get("/groups")
 async def get_groups(request: Request):
-    token = request.cookies.get(TOKEN_NAME)
-    if token is None:
-        return {"success": False, "message": "you need to be logged in"}
-    user_email = token_to_user_id.get(token)
-    if user_email is None:
-        return {"success": False, "message": "your login token is expired log in again"}
+    # token = request.cookies.get(TOKEN_NAME)
+    # if token is None:
+    #     return {"success": False, "message": "you need to be logged in"}
+    # user_email = token_to_user_id.get(token)
+    # if user_email is None:
+    #     return {"success": False, "message": "your login token is expired log in again"}
+    user_email = "test"
 
     select_get_groups = (
         select(BillingGroup)
@@ -234,14 +238,14 @@ async def get_groups(request: Request):
 
 @app.delete("/groups")
 async def delete_group(request: Request, group_info: GetGroupsInfo):
-    token = request.cookies.get(TOKEN_NAME)
-    if token is None:
-        return {"success": False, "message": "you need to be logged in"}
-    user_email = token_to_user_id.get(token)
-    if user_email is None:
-        return {"success": False, "message": "your login token is expired log in again"}
+    # token = request.cookies.get(TOKEN_NAME)
+    # if token is None:
+    #     return {"success": False, "message": "you need to be logged in"}
+    # user_email = token_to_user_id.get(token)
+    # if user_email is None:
+    #     return {"success": False, "message": "your login token is expired log in again"}
     get_user_group = select(UserGroupRelationships).filter(
-        UserGroupRelationships.user_email == user_email
+        UserGroupRelationships.user_email == "test"
     )
     relationship_to_group = session.scalar(get_user_group)
     if relationship_to_group is None:
@@ -308,13 +312,14 @@ async def invoice(new_invoice: InvoiceInfo, response: Response):
 
 @app.delete("/invoice")
 async def delete_invoice(request: Request, get_invoices: GetInvoiceInfo):
-    token = request.cookies.get(TOKEN_NAME)
-    if token is None:
-        return {"success": False, "message": "you need to be logged in"}
-    user_email = token_to_user_id.get(token)
-
-    if user_email is None:
-        return {"success": False, "message": "your login token is expired log in again"}
+    # token = request.cookies.get(TOKEN_NAME)
+    # if token is None:
+    #     return {"success": False, "message": "you need to be logged in"}
+    # user_email = token_to_user_id.get(token)
+    #
+    # if user_email is None:
+    #     return {"success": False, "message": "your login token is expired log in again"}
+    user_email = "test"
 
     get_invoice_info = (
         select(Invoice)
