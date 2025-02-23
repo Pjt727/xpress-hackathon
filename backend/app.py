@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, HTTPException, Response, Request, UploadFile
+import json
 from fastapi.responses import JSONResponse, FileResponse
 from openai import OpenAI
 from starlette.types import ExceptionHandler
@@ -97,12 +98,48 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         messages=[
             {
                 "role": "user",
-                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com/invoice-uploads/{user_num}/{invoice_num}.pdf Please parse the pdf and return the json of it's information formatted.",
+                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com/invoice-uploads/{user_num}/{invoice_num}.pdf Please download the pdf and return the json of it's information.",
             }
         ],
     )
-    for choice in chat.choices:
-        print(choice.message.content)
+    out = chat.choices[-1].message.content
+    assert out is not None
+    lines = out.splitlines()
+    start = lines.index("```json")
+    end = lines.index("```")
+
+    invoice_json = json.loads("".join(lines[start + 1 : end]))
+    invoice = Invoice(
+        group_id=1,  # would need to be fixed
+        total_invoice_cost=invoice_json.get("total_invoice_cost", 0),
+        is_settled=invoice_json.get("is_settled", False),
+        is_outgoing=invoice_json.get("is_outgoing", True),
+        item=invoice_json.get("item", invoice_json.get("items", [])),
+        details=invoice_json.get("details", []),
+    )
+    session.add(invoice)
+    session.commit()
+
+    return {"message": "PDF file uploaded and saved successfully"}
+
+
+@app.get("/send-email")
+async def send_email():
+    client = OpenAI(
+        base_url="https://kevinbeutler2003.ap.xpressai.cloud/api/lexi/",
+        api_key=os.getenv("XPRESS_API_KEY"),
+    )
+
+    _ = client.chat.completions.create(
+        model="Lexi",  # Available models: Lexi, LexiOnboarding
+        messages=[
+            {
+                "role": "user",
+                # TODO make it upload a certain pdf
+                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com/invoice-uploads/0/0.pdf Please parse the pdf and return the json of it's information formatted.",
+            }
+        ],
+    )
 
     return {"message": "PDF file uploaded and saved successfully"}
 
