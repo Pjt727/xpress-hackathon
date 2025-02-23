@@ -246,20 +246,45 @@ const openFileInput = () => {
   document.getElementById("fileInput").click();
 };
 
-const handleFileUpload = (event) => {
+const handleFileUpload = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
+
   if (file.type !== "application/pdf") {
     alert("Please upload a PDF file");
+    console.log("Upload failed: Not a PDF file");
     return;
   }
+
   if (file.size > 10 * 1024 * 1024) {
     alert("File size exceeds 10MB limit");
+    console.log("Upload failed: File too large");
     return;
   }
-  setTimeout(() => {
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await fetch(`${domainName}/invoice-upload`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("Upload successful:", result);
+    alert(result.message);
+
     invoiceGenerated.value = true;
-  }, 1000);
+  } catch (error) {
+    console.error("Upload failed:", error);
+    alert("File upload failed. Please try again.");
+  }
 };
 
 // Toggle the edit state

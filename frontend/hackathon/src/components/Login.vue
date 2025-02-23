@@ -47,6 +47,8 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { ref } from "vue";
 
+axios.defaults.withCredentials = true;
+
 export default {
   name: "LoginComponent",
   setup() {
@@ -61,15 +63,20 @@ export default {
       });
 
       try {
-          const response = await axios.post(`${domainName}/login`, {
-          email: email.value,
-          password: password.value,
-        });
+        const response = await axios.post(
+          `${domainName}/login`,
+          {
+            email: email.value,
+            password: password.value,
+          },
+          {
+            withCredentials: true,
+          }
+        );
 
         if (response.data.success) {
           console.log("Success!");
           alert("Success!");
-          document.cookie = `user_token=${response.headers["set-cookie"]}`;
           router.push("/history");
         } else {
           console.error("Failed:", response.data.message);

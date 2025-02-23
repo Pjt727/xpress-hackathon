@@ -3,6 +3,7 @@ import Login from "@/components/Login.vue";
 import Register from "@/components/Register.vue";
 import Invoice from "@/components/Invoice.vue";
 import History from "@/components/History.vue";
+import Group from "@/components/Group.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },
@@ -10,6 +11,7 @@ const routes = [
   { path: "/register", component: Register },
   { path: "/invoice", component: Invoice },
   { path: "/history", component: History },
+  { path: "/group", component: Group },
 ];
 
 const router = createRouter({

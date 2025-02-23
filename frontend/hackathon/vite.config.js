@@ -9,7 +9,7 @@ import vueDevTools from "vite-plugin-vue-devtools";
 export default defineConfig({
   plugins: [vue(), tailwindcss(), vueDevTools()],
   define: {
-    domainName: JSON.stringify('http://127.0.0.1:8000')
+    domainName: JSON.stringify("http://127.0.0.1:8000"),
   },
   resolve: {
     alias: {

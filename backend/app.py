@@ -98,7 +98,13 @@ async def login(login_info: LoginInfo, response: Response):
     # at this point the user logged in correctly
     new_token = secrets.token_urlsafe(32)
     token_to_user_id[new_token] = user.email
-    response.set_cookie(key=TOKEN_NAME, value=new_token)
+    response.set_cookie(
+        key=TOKEN_NAME,
+        value=new_token, 
+        httponly=True, 
+        samesite="None",
+        secure=True
+    )
     return {"success": True}
 
 
