@@ -147,7 +147,6 @@
 
 <script setup>
 import { ref, defineProps } from "vue";
-import { jsPDF } from "jspdf";
 
 const props = defineProps({
   invoiceData: Object,
