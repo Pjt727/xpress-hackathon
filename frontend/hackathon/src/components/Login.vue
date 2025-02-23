@@ -63,16 +63,10 @@ export default {
       });
 
       try {
-        const response = await axios.post(
-          `${domainName}/login`,
-          {
-            email: email.value,
-            password: password.value,
-          },
-          {
-            withCredentials: true,
-          }
-        );
+        const response = await axios.post(`${domainName}/login`, {
+          email: email.value,
+          password: password.value,
+        });
 
         if (response.data.success) {
           console.log("Success!");

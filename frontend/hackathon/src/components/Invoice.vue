@@ -51,6 +51,7 @@
                 v-if="isEditing"
                 v-model="invoice.from.name"
                 class="border mt-1 mb-1 border-gray-300 p-2 w-full rounded-lg text-sm"
+                placeholder="Name"
               />
               <p v-else class="text-gray-800 text-lg">
                 {{ invoice.from.name }}
@@ -59,6 +60,7 @@
                 v-if="isEditing"
                 v-model="invoice.from.address"
                 class="border mt-1 mb-1 border-gray-300 p-2 w-full rounded-lg text-sm"
+                placeholder="Address"
               />
               <p v-else class="text-gray-600 text-sm">
                 {{ invoice.from.address }}
@@ -67,6 +69,7 @@
                 v-if="isEditing"
                 v-model="invoice.from.email"
                 class="border mt-1 mb-1 border-gray-300 p-2 w-full rounded-lg text-sm"
+                placeholder="Email"
               />
               <p v-else class="text-gray-600 text-sm">
                 {{ invoice.from.email }}
@@ -78,6 +81,7 @@
                 v-if="isEditing"
                 v-model="invoice.number"
                 class="border mt-1 mb-1 border-gray-300 p-2 w-full rounded-lg text-sm"
+                placeholder="Invoice Number"
               />
               <p v-else class="text-gray-800 text-lg">{{ invoice.number }}</p>
             </div>
@@ -89,12 +93,14 @@
                 v-if="isEditing"
                 v-model="invoice.to.name"
                 class="border mt-1 mb-1 border-gray-300 p-2 w-full rounded-lg text-sm"
+                placeholder="Name"
               />
               <p v-else class="text-gray-800 text-lg">{{ invoice.to.name }}</p>
               <input
                 v-if="isEditing"
                 v-model="invoice.to.address"
                 class="border mt-1 mb-1 border-gray-300 p-2 w-full rounded-lg text-sm"
+                placeholder="Address"
               />
               <p v-else class="text-gray-600 text-sm">
                 {{ invoice.to.address }}
@@ -103,6 +109,7 @@
                 v-if="isEditing"
                 v-model="invoice.to.email"
                 class="border mt-1 mb-1 border-gray-300 p-2 w-full rounded-lg text-sm"
+                placeholder="Email"
               />
               <p v-else class="text-gray-600 text-sm">{{ invoice.to.email }}</p>
             </div>
@@ -113,6 +120,7 @@
                 v-model="invoice.date"
                 type="date"
                 class="border mt-1 mb-1 border-gray-300 p-2 w-full rounded-lg text-sm"
+                placeholder="Date"
               />
               <p v-else class="text-gray-800 text-lg">{{ invoice.date }}</p>
             </div>
@@ -169,12 +177,36 @@
           </table>
 
           <!-- Add Product Button -->
-          <button
-            @click="addProduct"
-            class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200"
-          >
-            Add Product
-          </button>
+          <div class="justify-stretch">
+            <button
+              @click="addProduct"
+              class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200"
+            >
+              Add Product
+            </button>
+
+            <!-- External/Internal Selection -->
+            <tg class="ml-50 m-4">External/Internal </tg>
+            <select
+              v-model="invoice.externalInternal"
+              class="rounded-md bg-white px-6 py-2 text-sm font-semibold text-gray-900 ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50"
+            >
+              <option value="" disabled selected></option>
+              <option value="external">External</option>
+              <option value="internal">Internal</option>
+            </select>
+
+            <!-- Paid/Unpaid Selection -->
+            <tg class="m-4"> Paid </tg>
+            <select
+              v-model="invoice.paidStatus"
+              class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50"
+            >
+              <option value="" disabled selected></option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -196,13 +228,21 @@
             {{ isEditing ? "Save" : "Edit" }}
           </button>
         </div>
+        <div class="justify-start space-x-6">
+          <button
+            @click="saveInvoice"
+            class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition duration-200"
+          >
+            Save
+          </button>
 
-        <button
-          @click="toggleInvoiceView"
-          class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition duration-200"
-        >
-          Generate Invoice
-        </button>
+          <button
+            @click="toggleInvoiceView"
+            class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition duration-200"
+          >
+            Generate Invoice
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -210,10 +250,11 @@
   <!-- Pass the edited invoice data to InvoiceView -->
   <InvoiceView v-if="invoiceView" :invoiceData="invoice" />
 </template>
-
+111
 <script setup>
 // Import relevant hooks and components
 import { ref } from "vue";
+import axios from "axios";
 import InvoiceView from "./InvoiceView.vue";
 
 // Define necessary state variables
@@ -306,6 +347,65 @@ const resetForm = () => {
 // Add a new product to the invoice
 const addProduct = () => {
   invoice.value.products.push({ description: "", qty: 1, rate: 0 });
+};
+
+// Calculate the total invoice cost
+const calculateTotalCost = () => {
+  return invoice.value.products.reduce((total, product) => {
+    return total + product.qty * product.rate;
+  }, 0);
+};
+
+// Save the invoice to the database
+// Save the invoice to the database
+const saveInvoice = async () => {
+  // Assign true/false based on selected values for Paid/Unpaid and External/Internal
+  const isSettled = invoice.value.paidStatus === "paid"; // true if "Paid", false if "Unpaid"
+  const isOutgoing = invoice.value.externalInternal === "external"; // true if "External", false if "Internal"
+
+  const invoiceData = {
+    group_id: 1,
+    total_invoice_cost: invoice.value.products.reduce(
+      (sum, product) => sum + product.qty * product.rate,
+      0
+    ),
+    is_settled: isSettled,
+    is_outgoing: isOutgoing,
+    item: invoice.value.products.map((product) => ({
+      description: product.description,
+      qty: product.qty,
+      rate: product.rate,
+      amount: product.qty * product.rate,
+    })),
+    details: [
+      {
+        from: {
+          name: invoice.value.from.name,
+          address: invoice.value.from.address,
+          email: invoice.value.from.email,
+        },
+        to: {
+          name: invoice.value.to.name,
+          address: invoice.value.to.address,
+          email: invoice.value.to.email,
+        },
+        date: new Date(invoice.value.date).toISOString().split("T")[0],
+        number: invoice.value.number,
+      },
+    ],
+  };
+
+  console.log("Sending invoiceData:", invoiceData);
+
+  try {
+    const response = await axios.post(
+      "http://127.0.0.1:8000/invoice",
+      invoiceData
+    );
+    console.log("Invoice saved successfully:", response.data);
+  } catch (error) {
+    console.error("Error saving invoice:", error.response?.data || error);
+  }
 };
 </script>
 

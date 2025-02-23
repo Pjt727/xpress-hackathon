@@ -53,9 +53,11 @@
             >
               <td class="px-6 py-4 text-gray-900">{{ invoice.number }}</td>
               <td class="px-6 py-4 text-gray-600">{{ invoice.date }}</td>
-              <td class="px-6 py-4 text-gray-900">{{ invoice.client }}</td>
+              <td class="px-6 py-4 text-gray-900">
+                {{ invoice.details.to.name }}
+              </td>
               <td class="px-6 py-4 text-gray-900 font-medium">
-                ${{ invoice.amount }}
+                ${{ invoice.total_invoice_cost }}
               </td>
               <td class="px-6 py-4 text-gray-900 font-medium">
                 {{ invoice.is_outgoing ? "External" : "Internal" }}
@@ -123,30 +125,35 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import axios from "axios";
 
 // Reactive data for invoices
 const searchQuery = ref("");
-const invoices = ref([
-  {
-    id: 1,
-    number: "#INV-2024-001",
-    date: "Jan 15, 2024",
-    client: "Tech Solutions Inc.",
-    amount: "2500.00",
-    is_settled: true,
-    is_outgoing: true,
-  },
-  {
-    id: 2,
-    number: "#INV-2024-002",
-    date: "Jan 18, 2024",
-    client: "Global Systems Ltd.",
-    amount: "1800.00",
-    is_settled: false,
-    is_outgoing: false,
-  },
-]);
+const invoices = ref([]); // We will fetch invoices from the backend
+
+// Fetch invoices from the API
+const fetchInvoices = async () => {
+  try {
+    const response = await axios.get("http://127.0.0.1:8000/invoice-uploads");
+    invoices.value = response.data.map((invoice) => ({
+      id: invoice.group_id,
+      number: invoice.details[0]?.number || "Unknown", // Constructing invoice number based on group_id (or replace with your logic)
+      date: invoice.details[0]?.date || "Unknown", // Date from details (replace with your field name)
+      client: invoice.details[0]?.name || "Unknown", // Client name from details (replace with your field name)
+      total_invoice_cost: invoice.total_invoice_cost,
+      is_outgoing: invoice.is_outgoing,
+      is_settled: invoice.is_settled,
+    }));
+  } catch (error) {
+    console.error("Error fetching invoices:", error);
+  }
+};
+
+// Fetch invoices when component is mounted
+onMounted(() => {
+  fetchInvoices();
+});
 
 // Computed property for filtering invoices
 const filteredInvoices = computed(() => {
