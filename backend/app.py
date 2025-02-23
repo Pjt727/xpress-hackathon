@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, HTTPException, Response, Request, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
+from openai import OpenAI
 from starlette.types import ExceptionHandler
 import os
 from backend.db.models import *
@@ -53,20 +54,38 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         email_to_filepaths[user_email] = (file_path_count, [])
         file_path_num_to_email[file_path_count] = user_email
         file_path_count += 1
+    user_num = email_to_filepaths[user_email][0]
     dir_path = os.path.join(
         "invoice-pdfs",
-        str(email_to_filepaths[user_email][0]),
+        str(user_num),
     )
     os.makedirs(dir_path, exist_ok=True)
 
+    invoice_num = email_to_filepaths[user_email][1]
     file_path = os.path.join(
         dir_path,
-        f"{len(email_to_filepaths[user_email][1])}.pdf",
+        f"{len(invoice_num)}.pdf",
     )
     email_to_filepaths[user_email][1].append(file_path)
 
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
+
+    client = OpenAI(
+        base_url="https://kevinbeutler2003.ap.xpressai.cloud/api/lexi/",
+        api_key=os.getenv("XPRESS_API_KEY"),
+    )
+
+    response = client.chat.completions.create(
+        model="Lexi",  # Available models: Lexi, LexiOnboarding
+        messages=[
+            {
+                "role": "user",
+                "content": f"The URL of the invoice is: https://xpress-hackathon.onrender.com//invoice-uploads/{user_num}/{invoice_num}. Please parse the pdf and return the json of it's information formatted.",
+            }
+        ],
+    )
+    print(response.model_dump_json())
 
     return {"message": "PDF file uploaded and saved successfully"}
 
