@@ -87,7 +87,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         api_key=os.getenv("XPRESS_API_KEY"),
     )
 
-    response = client.chat.completions.create(
+    chat = client.chat.completions.create(
         model="Lexi",  # Available models: Lexi, LexiOnboarding
         messages=[
             {
@@ -96,7 +96,8 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             }
         ],
     )
-    print(response.model_dump_json())
+    for choice in chat.choices:
+        print(choice.message.content)
 
     return {"message": "PDF file uploaded and saved successfully"}
 
@@ -118,11 +119,7 @@ async def login(login_info: LoginInfo, response: Response):
     new_token = secrets.token_urlsafe(32)
     token_to_user_id[new_token] = user.email
     response.set_cookie(
-        key=TOKEN_NAME,
-        value=new_token, 
-        httponly=True, 
-        samesite="None",
-        secure=True
+        key=TOKEN_NAME, value=new_token, httponly=False, samesite=None, secure=True
     )
     return {"success": True}
 
